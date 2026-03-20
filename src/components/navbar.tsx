@@ -15,6 +15,7 @@ import {
   X,
   Sun,
   Moon,
+  Radio,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
@@ -37,10 +38,26 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [liveCount, setLiveCount] = useState(0);
   const totalItems = useCart((s) => s.totalItems);
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    async function fetchLiveCount() {
+      try {
+        const res = await fetch("/api/live-sales?status=LIVE&limit=1");
+        const data = await res.json();
+        setLiveCount(data.pagination?.total || 0);
+      } catch {
+        // silent
+      }
+    }
+    fetchLiveCount();
+    const interval = setInterval(fetchLiveCount, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -116,6 +133,27 @@ export function Navbar() {
             />
           </div>
         </form>
+
+        {/* Live Sales Link */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="hidden md:flex items-center gap-1.5 cursor-pointer rounded-xl text-sm hover:bg-muted/60 relative"
+          onClick={() => router.push("/live")}
+        >
+          <div className="relative">
+            <Radio className="h-4 w-4" />
+            {liveCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600" />
+              </span>
+            )}
+          </div>
+          <span className={liveCount > 0 ? "text-red-600 dark:text-red-400 font-semibold" : ""}>
+            Live
+          </span>
+        </Button>
 
         {/* Right side */}
         <div className="flex items-center gap-1.5">
@@ -327,6 +365,27 @@ export function Navbar() {
                   />
                 </div>
               </form>
+
+              <button
+                onClick={() => {
+                  router.push("/live");
+                  setMobileMenuOpen(false);
+                }}
+                className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-sm hover:bg-muted/40 transition-colors cursor-pointer"
+              >
+                <div className="relative">
+                  <Radio className="h-4 w-4 text-red-500" />
+                  {liveCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600" />
+                    </span>
+                  )}
+                </div>
+                <span className={liveCount > 0 ? "text-red-600 dark:text-red-400 font-semibold" : ""}>
+                  Live Sales {liveCount > 0 ? `(${liveCount})` : ""}
+                </span>
+              </button>
 
               {user && (
                 <motion.div

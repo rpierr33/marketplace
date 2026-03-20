@@ -13,6 +13,20 @@ enum UserRole {
   ADMIN
 }
 
+enum LiveSaleStatus {
+  SCHEDULED
+  LIVE
+  ENDED
+  CANCELLED
+}
+
+enum LiveSaleType {
+  CLEARANCE
+  FLASH_SALE
+  SPECIAL_OCCASION
+  AUCTION
+}
+
 enum OrderStatus {
   PENDING
   CONFIRMED
@@ -46,6 +60,8 @@ model User {
   viewedItems       ViewedItem[]
   savedAddresses    SavedAddress[]
   savedPaymentMethods SavedPaymentMethod[]
+  bids              Bid[]
+  wonItems          LiveSaleItem[]
 
   @@map("users")
 }
@@ -62,8 +78,9 @@ model Seller {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  products Product[]
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products  Product[]
+  liveSales LiveSale[]
 
   @@map("sellers")
 }
@@ -82,11 +99,12 @@ model Product {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  seller     Seller      @relation(fields: [sellerId], references: [id], onDelete: Cascade)
-  orderItems OrderItem[]
-  reviews    Review[]
+  seller        Seller         @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  orderItems    OrderItem[]
+  reviews       Review[]
   wishlistItems WishlistItem[]
   viewedItems   ViewedItem[]
+  liveSaleItems LiveSaleItem[]
 
   @@index([sellerId])
   @@index([category])
@@ -217,4 +235,63 @@ model SavedPaymentMethod {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("saved_payment_methods")
+}
+
+model LiveSale {
+  id           String         @id @default(uuid())
+  sellerId     String         @map("seller_id")
+  title        String
+  description  String?
+  type         LiveSaleType   @default(FLASH_SALE)
+  status       LiveSaleStatus @default(SCHEDULED)
+  streamUrl    String?        @map("stream_url")
+  thumbnailUrl String?        @map("thumbnail_url")
+  startTime    DateTime       @map("start_time")
+  endTime      DateTime?      @map("end_time")
+  watcherCount Int            @default(0) @map("watcher_count")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  seller Seller         @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  items  LiveSaleItem[]
+
+  @@index([status])
+  @@index([startTime])
+  @@map("live_sales")
+}
+
+model LiveSaleItem {
+  id          String  @id @default(uuid())
+  liveSaleId  String  @map("live_sale_id")
+  productId   String  @map("product_id")
+  startingBid Float   @map("starting_bid")
+  currentBid  Float?  @map("current_bid")
+  buyNowPrice Float?  @map("buy_now_price")
+  isSold      Boolean @default(false) @map("is_sold")
+  winnerId    String? @map("winner_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  liveSale LiveSale @relation(fields: [liveSaleId], references: [id], onDelete: Cascade)
+  product  Product  @relation(fields: [productId], references: [id])
+  winner   User?    @relation(fields: [winnerId], references: [id])
+  bids     Bid[]
+
+  @@map("live_sale_items")
+}
+
+model Bid {
+  id             String @id @default(uuid())
+  liveSaleItemId String @map("live_sale_item_id")
+  userId         String @map("user_id")
+  amount         Float
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  liveSaleItem LiveSaleItem @relation(fields: [liveSaleItemId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([liveSaleItemId])
+  @@map("bids")
 }

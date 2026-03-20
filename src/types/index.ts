@@ -27,6 +27,7 @@ export interface ProductWithSeller {
   imageUrl: string | null;
   category: string;
   stock: number;
+  condition: string;
   isActive: boolean;
   createdAt: Date;
   seller: {

@@ -54,7 +54,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PRODUCT_CATEGORIES, ORDER_STATUS_LABELS } from "@/lib/constants";
+import { PRODUCT_CATEGORIES, ORDER_STATUS_LABELS, PRODUCT_CONDITIONS } from "@/lib/constants";
 import { toast } from "sonner";
 
 interface DashboardData {
@@ -69,6 +69,7 @@ interface Product {
   price: number;
   stock: number;
   category: string;
+  condition: string;
   imageUrl: string | null;
   isActive: boolean;
 }
@@ -120,6 +121,7 @@ export default function SellerDashboard() {
     category: "",
     stock: "",
     imageUrl: "",
+    condition: "NEW",
   });
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -178,6 +180,7 @@ export default function SellerDashboard() {
         price: parseFloat(form.price),
         category: form.category,
         stock: parseInt(form.stock),
+        condition: form.condition,
         ...(form.imageUrl && { imageUrl: form.imageUrl }),
       };
 
@@ -334,6 +337,7 @@ export default function SellerDashboard() {
       category: "",
       stock: "",
       imageUrl: "",
+      condition: "NEW",
     });
     setEditingId(null);
   };
@@ -359,6 +363,7 @@ export default function SellerDashboard() {
       category: product.category,
       stock: product.stock.toString(),
       imageUrl: product.imageUrl || "",
+      condition: product.condition || "NEW",
     });
     setEditingId(product.id);
     setDialogOpen(true);
@@ -605,6 +610,30 @@ export default function SellerDashboard() {
                     </Select>
                   </div>
                   <div className="space-y-2">
+                    <Label>Condition</Label>
+                    <Select
+                      value={form.condition}
+                      onValueChange={(v) =>
+                        setForm((f) => ({ ...f, condition: v ?? "NEW" }))
+                      }
+                    >
+                      <SelectTrigger className="cursor-pointer">
+                        <SelectValue placeholder="Select condition" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PRODUCT_CONDITIONS.map((cond) => (
+                          <SelectItem
+                            key={cond.value}
+                            value={cond.value}
+                            className="cursor-pointer"
+                          >
+                            {cond.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
                     <Label>Product Image</Label>
                     <Input
                       type="file"
@@ -648,77 +677,86 @@ export default function SellerDashboard() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {products.map((product) => (
-                    <div
-                      key={product.id}
-                      className="flex items-center gap-4 rounded-lg border p-3"
-                    >
-                      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-muted">
-                        {product.imageUrl ? (
-                          <Image
-                            src={product.imageUrl}
-                            alt={product.title}
-                            fill
-                            className="object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-full items-center justify-center">
-                            <Package className="h-5 w-5 text-muted-foreground/30" />
+                  {products.map((product) => {
+                    const conditionInfo = PRODUCT_CONDITIONS.find(
+                      (c) => c.value === (product.condition || "NEW")
+                    ) || PRODUCT_CONDITIONS[0];
+                    return (
+                      <div
+                        key={product.id}
+                        className="flex items-center gap-4 rounded-lg border p-3"
+                      >
+                        <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-muted">
+                          {product.imageUrl ? (
+                            <Image
+                              src={product.imageUrl}
+                              alt={product.title}
+                              fill
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full items-center justify-center">
+                              <Package className="h-5 w-5 text-muted-foreground/30" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">
+                            {product.title}
+                          </p>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <span>${product.price.toFixed(2)}</span>
+                            <span>·</span>
+                            <span>{product.stock} in stock</span>
+                            <span>·</span>
+                            <span>{product.category}</span>
+                            <span>·</span>
+                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${conditionInfo.color}`}>
+                              {conditionInfo.label}
+                            </span>
                           </div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">
-                          {product.title}
-                        </p>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span>${product.price.toFixed(2)}</span>
-                          <span>·</span>
-                          <span>{product.stock} in stock</span>
-                          <span>·</span>
-                          <span>{product.category}</span>
+                        </div>
+                        <Badge
+                          variant={product.isActive ? "default" : "secondary"}
+                          className="shrink-0"
+                        >
+                          {product.isActive ? "Active" : "Hidden"}
+                        </Badge>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 cursor-pointer"
+                            onClick={() =>
+                              toggleActive(product.id, product.isActive)
+                            }
+                          >
+                            {product.isActive ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 cursor-pointer"
+                            onClick={() => startEdit(product)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 cursor-pointer text-destructive hover:text-destructive"
+                            onClick={() => handleDelete(product.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
-                      <Badge
-                        variant={product.isActive ? "default" : "secondary"}
-                        className="shrink-0"
-                      >
-                        {product.isActive ? "Active" : "Hidden"}
-                      </Badge>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 cursor-pointer"
-                          onClick={() =>
-                            toggleActive(product.id, product.isActive)
-                          }
-                        >
-                          {product.isActive ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 cursor-pointer"
-                          onClick={() => startEdit(product)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 cursor-pointer text-destructive hover:text-destructive"
-                          onClick={() => handleDelete(product.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>

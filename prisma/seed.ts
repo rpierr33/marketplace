@@ -24,6 +24,7 @@ const PRODUCTS = [
     category: "Electronics",
     stock: 45,
     imageUrl: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&h=600&fit=crop",
+    condition: "NEW" as const,
   },
   {
     title: "Vintage Leather Messenger Bag",
@@ -32,6 +33,7 @@ const PRODUCTS = [
     category: "Clothing",
     stock: 22,
     imageUrl: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=600&h=600&fit=crop",
+    condition: "SEEMS_NEW" as const,
   },
   {
     title: "Smart Home Security Camera 4K",
@@ -40,6 +42,7 @@ const PRODUCTS = [
     category: "Electronics",
     stock: 78,
     imageUrl: "https://images.unsplash.com/photo-1558002038-1055907df827?w=600&h=600&fit=crop",
+    condition: "NEW" as const,
   },
   {
     title: "Organic Cotton Throw Blanket",
@@ -48,6 +51,7 @@ const PRODUCTS = [
     category: "Home & Garden",
     stock: 150,
     imageUrl: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600&h=600&fit=crop",
+    condition: "NEW" as const,
   },
   {
     title: "Professional Yoga Mat - Extra Thick",
@@ -56,6 +60,7 @@ const PRODUCTS = [
     category: "Sports",
     stock: 200,
     imageUrl: "https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?w=600&h=600&fit=crop",
+    condition: "NEW" as const,
   },
   {
     title: "Mechanical Keyboard - Cherry MX Blue",
@@ -64,6 +69,7 @@ const PRODUCTS = [
     category: "Electronics",
     stock: 33,
     imageUrl: "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=600&h=600&fit=crop",
+    condition: "PRETTY_GOOD" as const,
   },
   {
     title: "Handmade Ceramic Mug Set (4 Pack)",
@@ -72,6 +78,7 @@ const PRODUCTS = [
     category: "Home & Garden",
     stock: 85,
     imageUrl: "https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=600&h=600&fit=crop",
+    condition: "NEW" as const,
   },
   {
     title: "Running Shoes - Ultralight Carbon",
@@ -80,6 +87,7 @@ const PRODUCTS = [
     category: "Sports",
     stock: 60,
     imageUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&h=600&fit=crop",
+    condition: "SEEMS_NEW" as const,
   },
   {
     title: "Bestselling Fiction Box Set (5 Books)",
@@ -88,6 +96,7 @@ const PRODUCTS = [
     category: "Books",
     stock: 120,
     imageUrl: "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=600&h=600&fit=crop",
+    condition: "NEW" as const,
   },
   {
     title: "Wireless Charging Pad - Bamboo",
@@ -96,6 +105,7 @@ const PRODUCTS = [
     category: "Electronics",
     stock: 300,
     imageUrl: "https://images.unsplash.com/photo-1622782914767-404fb9ab3f57?w=600&h=600&fit=crop",
+    condition: "NEW" as const,
   },
   {
     title: "Premium Skincare Gift Set",
@@ -104,6 +114,7 @@ const PRODUCTS = [
     category: "Health & Beauty",
     stock: 95,
     imageUrl: "https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=600&h=600&fit=crop",
+    condition: "NEW" as const,
   },
   {
     title: "Watercolor Paint Set - Artist Grade",
@@ -112,6 +123,7 @@ const PRODUCTS = [
     category: "Art & Crafts",
     stock: 140,
     imageUrl: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=600&h=600&fit=crop",
+    condition: "PRETTY_GOOD" as const,
   },
   {
     title: "Smart Watch Series X",
@@ -120,6 +132,7 @@ const PRODUCTS = [
     category: "Electronics",
     stock: 2,
     imageUrl: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&h=600&fit=crop",
+    condition: "USED_BATTLE_SCARS" as const,
   },
   {
     title: "Cast Iron Skillet - Pre-Seasoned 12\"",
@@ -128,6 +141,7 @@ const PRODUCTS = [
     category: "Home & Garden",
     stock: 70,
     imageUrl: "https://images.unsplash.com/photo-1585515320310-259814833e62?w=600&h=600&fit=crop",
+    condition: "NEW" as const,
   },
   {
     title: "Denim Jacket - Classic Fit",
@@ -136,6 +150,7 @@ const PRODUCTS = [
     category: "Clothing",
     stock: 55,
     imageUrl: "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=600&h=600&fit=crop",
+    condition: "SEEMS_NEW" as const,
   },
   {
     title: "Bluetooth Portable Speaker",
@@ -144,6 +159,7 @@ const PRODUCTS = [
     category: "Electronics",
     stock: 180,
     imageUrl: "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=600&h=600&fit=crop",
+    condition: "NEW" as const,
   },
   {
     title: "Wooden Building Blocks Set - 100pc",
@@ -152,6 +168,7 @@ const PRODUCTS = [
     category: "Toys",
     stock: 250,
     imageUrl: "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=600&h=600&fit=crop",
+    condition: "NEW" as const,
   },
   {
     title: "Resistance Bands Set - 5 Levels",
@@ -160,6 +177,7 @@ const PRODUCTS = [
     category: "Sports",
     stock: 400,
     imageUrl: "https://images.unsplash.com/photo-1598289431512-b97b0917affc?w=600&h=600&fit=crop",
+    condition: "PRETTY_GOOD" as const,
   },
   {
     title: "Essential Oil Diffuser - Wood Grain",
@@ -168,6 +186,7 @@ const PRODUCTS = [
     category: "Health & Beauty",
     stock: 110,
     imageUrl: "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=600&h=600&fit=crop",
+    condition: "USED_BATTLE_SCARS" as const,
   },
   {
     title: "Canvas Tote Bag - Minimalist",
@@ -176,6 +195,7 @@ const PRODUCTS = [
     category: "Clothing",
     stock: 190,
     imageUrl: "https://images.unsplash.com/photo-1544816155-12df9643f363?w=600&h=600&fit=crop",
+    condition: "NEW" as const,
   },
 ];
 
@@ -268,10 +288,11 @@ async function main() {
         category: p.category,
         stock: p.stock,
         imageUrl: p.imageUrl,
+        condition: p.condition,
         isActive: true,
       },
     });
-    console.log(`  Created product: ${p.title}`);
+    console.log(`  Created product: ${p.title} (${p.condition})`);
   }
 
   // Create some reviews

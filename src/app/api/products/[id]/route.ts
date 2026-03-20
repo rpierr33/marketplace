@@ -11,6 +11,7 @@ const updateProductSchema = z.object({
   stock: z.number().int().min(0).optional(),
   imageUrl: z.string().url().optional().nullable(),
   isActive: z.boolean().optional(),
+  condition: z.enum(["NEW", "SEEMS_NEW", "PRETTY_GOOD", "USED_BATTLE_SCARS"]).optional(),
 });
 
 // GET /api/products/[id]

@@ -11,6 +11,10 @@ import {
   Plus,
   Loader2,
   Package,
+  Sparkles,
+  ThumbsUp,
+  Smile,
+  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +22,14 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCart } from "@/hooks/use-cart";
 import { toast } from "sonner";
+import { PRODUCT_CONDITIONS } from "@/lib/constants";
+
+const CONDITION_ICONS: Record<string, React.ReactNode> = {
+  sparkles: <Sparkles className="h-4 w-4" />,
+  thumbsUp: <ThumbsUp className="h-4 w-4" />,
+  smile: <Smile className="h-4 w-4" />,
+  shield: <Shield className="h-4 w-4" />,
+};
 
 interface ProductDetail {
   id: string;
@@ -27,6 +39,7 @@ interface ProductDetail {
   imageUrl: string | null;
   category: string;
   stock: number;
+  condition: string;
   isActive: boolean;
   createdAt: string;
   seller: {
@@ -89,6 +102,10 @@ export default function ProductPage() {
         product.reviews.length
       : 0;
 
+  const conditionInfo = PRODUCT_CONDITIONS.find(
+    (c) => c.value === (product.condition || "NEW")
+  ) || PRODUCT_CONDITIONS[0];
+
   const handleAddToCart = () => {
     addItem({
       productId: product.id,
@@ -125,9 +142,17 @@ export default function ProductPage() {
         {/* Details */}
         <div className="space-y-6">
           <div>
-            <Badge variant="secondary" className="mb-2">
-              {product.category}
-            </Badge>
+            <div className="flex items-center gap-2 mb-2">
+              <Badge variant="secondary">
+                {product.category}
+              </Badge>
+              <span
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${conditionInfo.color}`}
+              >
+                {CONDITION_ICONS[conditionInfo.icon]}
+                {conditionInfo.label}
+              </span>
+            </div>
             <h1 className="text-3xl font-heading font-bold">{product.title}</h1>
 
             <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">

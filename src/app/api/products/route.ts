@@ -10,6 +10,7 @@ const createProductSchema = z.object({
   category: z.string().min(1),
   stock: z.number().int().min(0).default(0),
   imageUrl: z.string().url().optional(),
+  condition: z.enum(["NEW", "SEEMS_NEW", "PRETTY_GOOD", "USED_BATTLE_SCARS"]).default("NEW"),
 });
 
 // GET /api/products - List products with search/filter
@@ -25,6 +26,7 @@ export async function GET(request: NextRequest) {
     const sortBy = searchParams.get("sortBy") || "createdAt";
     const sortOrder = searchParams.get("sortOrder") || "desc";
     const sellerId = searchParams.get("sellerId") || "";
+    const condition = searchParams.get("condition") || "";
 
     const where = {
       isActive: true,
@@ -36,6 +38,7 @@ export async function GET(request: NextRequest) {
       }),
       ...(category && { category }),
       ...(sellerId && { sellerId }),
+      ...(condition && { condition: condition as "NEW" | "SEEMS_NEW" | "PRETTY_GOOD" | "USED_BATTLE_SCARS" }),
       price: { gte: minPrice, lte: maxPrice },
     };
 

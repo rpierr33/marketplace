@@ -12,12 +12,24 @@ import {
   Check,
   Loader2,
   Package,
+  Sparkles,
+  ThumbsUp,
+  Smile,
+  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useCart } from "@/hooks/use-cart";
 import { toast } from "sonner";
+import { PRODUCT_CONDITIONS } from "@/lib/constants";
 import type { ProductWithSeller } from "@/types";
+
+const CONDITION_ICONS: Record<string, React.ReactNode> = {
+  sparkles: <Sparkles className="h-3 w-3" />,
+  thumbsUp: <ThumbsUp className="h-3 w-3" />,
+  smile: <Smile className="h-3 w-3" />,
+  shield: <Shield className="h-3 w-3" />,
+};
 
 interface ProductCardProps {
   product: ProductWithSeller;
@@ -49,6 +61,10 @@ export function ProductCard({ product }: ProductCardProps) {
       : product.stock <= 3
         ? "low"
         : "in";
+
+  const conditionInfo = PRODUCT_CONDITIONS.find(
+    (c) => c.value === (product.condition || "NEW")
+  ) || PRODUCT_CONDITIONS[0];
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -161,6 +177,16 @@ export function ProductCard({ product }: ProductCardProps) {
             {product.seller.isVerified && (
               <BadgeCheck className="h-3.5 w-3.5 text-violet-500 shrink-0" />
             )}
+          </div>
+
+          {/* Condition badge */}
+          <div className="flex items-center">
+            <span
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${conditionInfo.color}`}
+            >
+              {CONDITION_ICONS[conditionInfo.icon]}
+              {conditionInfo.label}
+            </span>
           </div>
 
           {/* Rating */}

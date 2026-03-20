@@ -42,7 +42,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProductCard } from "@/components/product-card";
-import { PRODUCT_CATEGORIES } from "@/lib/constants";
+import { PRODUCT_CATEGORIES, PRODUCT_CONDITIONS } from "@/lib/constants";
 import type { ProductWithSeller } from "@/types";
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
@@ -86,6 +86,7 @@ export default function HomeContent() {
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [category, setCategory] = useState("");
   const [sortBy, setSortBy] = useState("createdAt");
+  const [conditionFilter, setConditionFilter] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -95,6 +96,7 @@ export default function HomeContent() {
     const params = new URLSearchParams();
     if (search) params.set("search", search);
     if (category) params.set("category", category);
+    if (conditionFilter) params.set("condition", conditionFilter);
     params.set("sortBy", sortBy);
     params.set("sortOrder", sortBy === "price" ? "asc" : "desc");
     params.set("page", page.toString());
@@ -111,7 +113,7 @@ export default function HomeContent() {
     } finally {
       setLoading(false);
     }
-  }, [search, category, sortBy, page]);
+  }, [search, category, sortBy, conditionFilter, page]);
 
   useEffect(() => {
     fetchProducts();
@@ -482,6 +484,33 @@ export default function HomeContent() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <Select
+              value={conditionFilter}
+              onValueChange={(v) => {
+                setConditionFilter(v === "ALL" ? "" : (v ?? ""));
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-40 cursor-pointer rounded-lg border-slate-200 dark:border-slate-700 text-sm">
+                <SelectValue placeholder="Condition">
+                  {(value: string) => {
+                    if (!value || value === "ALL") return "All Conditions";
+                    const found = PRODUCT_CONDITIONS.find((c) => c.value === value);
+                    return found ? found.label : "All Conditions";
+                  }}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent className="rounded-lg">
+                <SelectItem value="ALL" className="cursor-pointer">
+                  All Conditions
+                </SelectItem>
+                {PRODUCT_CONDITIONS.map((cond) => (
+                  <SelectItem key={cond.value} value={cond.value} className="cursor-pointer">
+                    {cond.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <SlidersHorizontal className="h-4 w-4 text-slate-400" />
             <Select
               value={sortBy}
@@ -571,6 +600,7 @@ export default function HomeContent() {
                 onClick={() => {
                   setSearch("");
                   setCategory("");
+                  setConditionFilter("");
                   setPage(1);
                 }}
               >

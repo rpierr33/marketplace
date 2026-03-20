@@ -27,6 +27,13 @@ enum LiveSaleType {
   AUCTION
 }
 
+enum ProductCondition {
+  NEW
+  SEEMS_NEW
+  PRETTY_GOOD
+  USED_BATTLE_SCARS
+}
+
 enum OrderStatus {
   PENDING
   CONFIRMED
@@ -93,8 +100,9 @@ model Product {
   price       Float
   imageUrl    String? @map("image_url")
   category    String
-  stock       Int     @default(0)
-  isActive    Boolean @default(true) @map("is_active")
+  stock       Int              @default(0)
+  condition   ProductCondition @default(NEW)
+  isActive    Boolean          @default(true) @map("is_active")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Store, Loader2 } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,6 +52,7 @@ export default function SignupPage() {
       }
 
       toast.success("Account created! Welcome to Marketplace.");
+      await useAuth.getState().fetchUser();
       router.push(data.user?.role === "SELLER" ? "/seller/onboarding" : "/");
       router.refresh();
     } catch {

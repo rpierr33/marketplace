@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Store, Loader2 } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,6 +45,7 @@ export default function LoginForm() {
       }
 
       toast.success("Welcome back!");
+      await useAuth.getState().fetchUser();
       router.push(redirect);
       router.refresh();
     } catch {

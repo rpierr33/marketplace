@@ -27,16 +27,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { useCart } from "@/hooks/use-cart";
+import { useAuth } from "@/hooks/use-auth";
 
 export function Navbar() {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
-  const [user, setUser] = useState<{
-    id: string;
-    email?: string;
-    role?: string;
-    name?: string;
-  } | null>(null);
+  const { user, loading, fetchUser, logout } = useAuth();
   const [search, setSearch] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
@@ -48,17 +44,11 @@ export function Navbar() {
   }, []);
 
   useEffect(() => {
-    fetch("/api/auth/me")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data?.user) setUser(data.user);
-      })
-      .catch(() => {});
-  }, []);
+    fetchUser();
+  }, [fetchUser]);
 
   const handleSignOut = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    setUser(null);
+    await logout();
     router.push("/");
     router.refresh();
   };
@@ -182,7 +172,7 @@ export function Navbar() {
           </Button>
 
           {/* User section */}
-          {user ? (
+          {!loading && user ? (
             <DropdownMenu>
               <DropdownMenuTrigger >
                 <Button
@@ -261,7 +251,7 @@ export function Navbar() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          ) : (
+          ) : !loading && !user ? (
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
@@ -279,7 +269,7 @@ export function Navbar() {
                 Sign up
               </Button>
             </div>
-          )}
+          ) : null}
 
           {/* Mobile menu toggle */}
           <Button
@@ -421,7 +411,7 @@ export function Navbar() {
                 </motion.div>
               )}
 
-              {!user && (
+              {!user && !loading && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}

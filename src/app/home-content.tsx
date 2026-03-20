@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -24,6 +24,11 @@ import {
   Palette,
   MoreHorizontal,
   PackageSearch,
+  Clock,
+  Flame,
+  Tag,
+  Star,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,17 +46,17 @@ import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import type { ProductWithSeller } from "@/types";
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
-  Electronics: <Monitor className="h-3.5 w-3.5" />,
-  Clothing: <Shirt className="h-3.5 w-3.5" />,
-  "Home & Garden": <Home className="h-3.5 w-3.5" />,
-  Sports: <Dumbbell className="h-3.5 w-3.5" />,
-  Books: <BookOpen className="h-3.5 w-3.5" />,
-  Toys: <Gamepad2 className="h-3.5 w-3.5" />,
-  "Health & Beauty": <Heart className="h-3.5 w-3.5" />,
-  Automotive: <Car className="h-3.5 w-3.5" />,
-  "Food & Drink": <UtensilsCrossed className="h-3.5 w-3.5" />,
-  "Art & Crafts": <Palette className="h-3.5 w-3.5" />,
-  Other: <MoreHorizontal className="h-3.5 w-3.5" />,
+  Electronics: <Monitor className="h-4 w-4" />,
+  Clothing: <Shirt className="h-4 w-4" />,
+  "Home & Garden": <Home className="h-4 w-4" />,
+  Sports: <Dumbbell className="h-4 w-4" />,
+  Books: <BookOpen className="h-4 w-4" />,
+  Toys: <Gamepad2 className="h-4 w-4" />,
+  "Health & Beauty": <Heart className="h-4 w-4" />,
+  Automotive: <Car className="h-4 w-4" />,
+  "Food & Drink": <UtensilsCrossed className="h-4 w-4" />,
+  "Art & Crafts": <Palette className="h-4 w-4" />,
+  Other: <MoreHorizontal className="h-4 w-4" />,
 };
 
 const containerVariants = {
@@ -59,23 +64,20 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.06,
-      delayChildren: 0.1,
+      staggerChildren: 0.05,
+      delayChildren: 0.05,
     },
   },
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 30, scale: 0.95 },
+  hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
     y: 0,
-    scale: 1,
-    transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as const },
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] as const },
   },
 };
-
-const HEADLINE_WORDS = ["Amazing", "Unique", "Curated", "Premium"];
 
 export default function HomeContent() {
   const searchParams = useSearchParams();
@@ -87,14 +89,6 @@ export default function HomeContent() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
-  const [headlineIndex, setHeadlineIndex] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setHeadlineIndex((prev) => (prev + 1) % HEADLINE_WORDS.length);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
@@ -134,289 +128,377 @@ export default function HomeContent() {
     fetchProducts();
   };
 
+  // Derived data for special sections
+  const trendingProducts = useMemo(() => products.slice(0, 4), [products]);
+
+  const dealOfTheDay = useMemo(() => {
+    if (products.length === 0) return null;
+    // Pick the product with most reviews, or highest price as fallback
+    return [...products].sort((a, b) => {
+      const aReviews = a._count?.reviews || a.reviews.length;
+      const bReviews = b._count?.reviews || b.reviews.length;
+      if (bReviews !== aReviews) return bReviews - aReviews;
+      return b.price - a.price;
+    })[0];
+  }, [products]);
+
+  const gridProducts = useMemo(() => {
+    // Exclude trending (first 4) to avoid duplication, but only if we have enough
+    if (products.length > 4) return products.slice(4);
+    return products;
+  }, [products]);
+
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-violet-50 via-white to-emerald-50 dark:from-violet-950/40 dark:via-background dark:to-emerald-950/30">
-        {/* Animated gradient mesh blobs */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full bg-violet-400/20 dark:bg-violet-600/10 blur-3xl animate-pulse" />
-          <div
-            className="absolute top-20 right-0 w-[400px] h-[400px] rounded-full bg-emerald-400/20 dark:bg-emerald-600/10 blur-3xl animate-pulse"
-            style={{ animationDelay: "1s", animationDuration: "4s" }}
-          />
-          <div
-            className="absolute -bottom-20 left-1/3 w-[350px] h-[350px] rounded-full bg-pink-400/15 dark:bg-pink-600/10 blur-3xl animate-pulse"
-            style={{ animationDelay: "2s", animationDuration: "5s" }}
-          />
-          <div
-            className="absolute top-1/2 right-1/4 w-[250px] h-[250px] rounded-full bg-violet-300/10 dark:bg-violet-500/10 blur-2xl animate-pulse"
-            style={{ animationDelay: "3s", animationDuration: "6s" }}
-          />
-        </div>
+    <div className="min-h-screen bg-white dark:bg-background">
+      {/* ============ HERO BANNER ============ */}
+      <section className="relative bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 overflow-hidden">
+        {/* Subtle pattern overlay */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(99,102,241,0.12),transparent_60%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(16,185,129,0.08),transparent_50%)]" />
 
-        {/* Floating dots */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {[...Array(6)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-2 h-2 rounded-full bg-violet-400/30 dark:bg-violet-400/20"
-              style={{
-                left: `${15 + i * 15}%`,
-                top: `${20 + (i % 3) * 25}%`,
-              }}
-              animate={{
-                y: [0, -20, 0],
-                x: [0, 10, 0],
-                opacity: [0.3, 0.6, 0.3],
-              }}
-              transition={{
-                duration: 4 + i * 0.5,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: i * 0.8,
-              }}
-            />
-          ))}
-          {[...Array(4)].map((_, i) => (
-            <motion.div
-              key={`dot-${i}`}
-              className="absolute w-1.5 h-1.5 rounded-full bg-emerald-400/25 dark:bg-emerald-400/15"
-              style={{
-                right: `${10 + i * 20}%`,
-                bottom: `${15 + (i % 2) * 30}%`,
-              }}
-              animate={{
-                y: [0, 15, 0],
-                x: [0, -8, 0],
-                opacity: [0.2, 0.5, 0.2],
-              }}
-              transition={{
-                duration: 5 + i * 0.7,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: i * 1.2,
-              }}
-            />
-          ))}
-        </div>
+        <div className="relative mx-auto max-w-7xl px-4 py-16 md:py-24">
+          <div className="text-center space-y-6">
+            {/* Trust signal */}
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/10 text-white/80 text-sm">
+              <Shield className="h-3.5 w-3.5 text-emerald-400" />
+              Trusted marketplace with secure checkout
+            </div>
 
-        <div className="relative mx-auto max-w-7xl px-4 py-20 md:py-32">
-          <motion.div
-            className="text-center space-y-8"
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-            >
-              <Badge
-                variant="secondary"
-                className="px-5 py-2 text-sm bg-violet-100/80 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300 backdrop-blur-sm border border-violet-200/50 dark:border-violet-700/30 shadow-sm"
-              >
-                <Sparkles className="mr-2 h-4 w-4" />
-                Trusted by thousands of sellers
-              </Badge>
-            </motion.div>
-
-            <motion.h1
-              className="text-5xl md:text-7xl lg:text-8xl font-heading font-bold tracking-tight leading-[1.1]"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.7 }}
-            >
-              Discover{" "}
-              <span className="relative inline-block">
-                <AnimatePresence mode="wait">
-                  <motion.span
-                    key={headlineIndex}
-                    className="bg-gradient-to-r from-violet-600 via-purple-500 to-emerald-500 bg-clip-text text-transparent inline-block"
-                    initial={{ opacity: 0, y: 20, rotateX: -90 }}
-                    animate={{ opacity: 1, y: 0, rotateX: 0 }}
-                    exit={{ opacity: 0, y: -20, rotateX: 90 }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    {HEADLINE_WORDS[headlineIndex]}
-                  </motion.span>
-                </AnimatePresence>
-              </span>
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[1.1]">
+              Shop the Best Deals
               <br />
-              <span className="text-foreground/90">Products</span>
-            </motion.h1>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
+                All in One Place
+              </span>
+            </h1>
 
-            <motion.p
-              className="mx-auto max-w-2xl text-lg md:text-xl text-muted-foreground/80 leading-relaxed"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.7 }}
-            >
-              A marketplace where independent sellers showcase their best
-              products. Find unique items at great prices, directly from the
-              people who make and curate them.
-            </motion.p>
+            <p className="mx-auto max-w-xl text-lg text-slate-300 leading-relaxed">
+              Discover thousands of products from independent sellers.
+              Great prices, direct from the people who make them.
+            </p>
 
-            {/* Hero Search */}
-            <motion.form
+            {/* Hero Search Bar */}
+            <form
               onSubmit={handleSearch}
-              className="mx-auto flex max-w-2xl gap-3"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7, duration: 0.7 }}
+              className="mx-auto flex max-w-2xl gap-0 mt-8"
             >
-              <div className="relative flex-1 group">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/60 transition-colors group-focus-within:text-violet-500" />
+              <div className="relative flex-1">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                 <Input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search for anything..."
-                  className="h-14 pl-12 pr-4 text-base rounded-2xl bg-white/70 dark:bg-white/5 backdrop-blur-xl border-white/40 dark:border-white/10 shadow-lg shadow-violet-500/5 focus:shadow-violet-500/10 focus:border-violet-300 dark:focus:border-violet-600 transition-all duration-300"
+                  placeholder="Search products, brands, and more..."
+                  className="h-14 pl-12 pr-4 text-base rounded-l-xl rounded-r-none bg-white dark:bg-slate-800 border-0 shadow-2xl focus-visible:ring-2 focus-visible:ring-emerald-400 text-slate-900 dark:text-white placeholder:text-slate-400"
                 />
               </div>
               <Button
                 type="submit"
-                className="h-14 px-8 rounded-2xl cursor-pointer bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-700 hover:to-violet-800 text-white shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-all duration-300 text-base font-semibold"
+                className="h-14 px-8 rounded-r-xl rounded-l-none cursor-pointer bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-base shadow-2xl transition-colors"
               >
-                <Search className="h-5 w-5 mr-2" />
-                Search
+                <Search className="h-5 w-5 md:mr-2" />
+                <span className="hidden md:inline">Search</span>
               </Button>
-            </motion.form>
-          </motion.div>
+            </form>
+
+            {/* Quick stats */}
+            <div className="flex items-center justify-center gap-8 pt-4 text-sm text-slate-400">
+              <span className="flex items-center gap-1.5">
+                <Sparkles className="h-4 w-4 text-amber-400" />
+                New arrivals daily
+              </span>
+              <span className="hidden sm:flex items-center gap-1.5">
+                <Truck className="h-4 w-4 text-emerald-400" />
+                Free shipping available
+              </span>
+              <span className="hidden md:flex items-center gap-1.5">
+                <TrendingUp className="h-4 w-4 text-cyan-400" />
+                Best price guarantee
+              </span>
+            </div>
+          </div>
         </div>
 
-        {/* Trust badges */}
-        <motion.div
-          className="relative border-t border-white/30 dark:border-white/5 bg-white/40 dark:bg-white/5 backdrop-blur-xl"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1, duration: 0.6 }}
-        >
-          <div className="mx-auto max-w-7xl px-4 py-5">
-            <div className="grid grid-cols-3 gap-6 text-center">
+        {/* Trust badges bar */}
+        <div className="relative border-t border-white/10 bg-white/5 backdrop-blur-sm">
+          <div className="mx-auto max-w-7xl px-4 py-3">
+            <div className="grid grid-cols-3 gap-4 text-center">
               {[
                 {
-                  icon: <Shield className="h-5 w-5" />,
-                  label: "Secure Payments",
-                  sub: "256-bit encryption",
+                  icon: <Shield className="h-4 w-4 text-emerald-400" />,
+                  label: "Secure Checkout",
+                  sub: "256-bit SSL encryption",
                 },
                 {
-                  icon: <Truck className="h-5 w-5" />,
-                  label: "Seller Direct",
-                  sub: "No middlemen",
+                  icon: <Truck className="h-4 w-4 text-cyan-400" />,
+                  label: "Free Shipping",
+                  sub: "On eligible orders",
                 },
                 {
-                  icon: <TrendingUp className="h-5 w-5" />,
+                  icon: <Tag className="h-4 w-4 text-amber-400" />,
                   label: "Best Prices",
-                  sub: "Price guarantee",
+                  sub: "Direct from sellers",
                 },
-              ].map((badge, i) => (
-                <motion.div
+              ].map((badge) => (
+                <div
                   key={badge.label}
-                  className="flex items-center justify-center gap-3"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.1 + i * 0.15, duration: 0.5 }}
+                  className="flex items-center justify-center gap-2.5"
                 >
-                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-violet-100/80 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-white/10">
                     {badge.icon}
                   </div>
                   <div className="text-left hidden sm:block">
-                    <p className="text-sm font-semibold text-foreground/90">
+                    <p className="text-xs font-semibold text-white/90">
                       {badge.label}
                     </p>
-                    <p className="text-xs text-muted-foreground">{badge.sub}</p>
+                    <p className="text-[11px] text-white/50">{badge.sub}</p>
                   </div>
-                  <span className="sm:hidden text-sm font-medium text-foreground/80">
+                  <span className="sm:hidden text-xs font-medium text-white/80">
                     {badge.label}
                   </span>
-                </motion.div>
+                </div>
               ))}
             </div>
           </div>
-        </motion.div>
+        </div>
       </section>
 
-      {/* Filters + Products */}
-      <section className="mx-auto max-w-7xl px-4 py-10">
-        {/* Category pills */}
-        <motion.div
-          className="mb-8 flex flex-wrap gap-2"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-        >
-          <button
-            onClick={() => {
-              setCategory("");
-              setPage(1);
-            }}
-            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 cursor-pointer ${
-              category === ""
-                ? "bg-gradient-to-r from-violet-600 to-violet-700 text-white shadow-md shadow-violet-500/25"
-                : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground border border-transparent hover:border-violet-200 dark:hover:border-violet-800"
-            }`}
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            All
-          </button>
-          {PRODUCT_CATEGORIES.map((cat) => (
+      {/* ============ CATEGORY BAR ============ */}
+      <section className="sticky top-0 z-30 bg-white dark:bg-background border-b border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="mx-auto max-w-7xl px-4">
+          <div className="flex items-center gap-2 py-3 overflow-x-auto scrollbar-none">
             <button
-              key={cat}
               onClick={() => {
-                setCategory(cat);
+                setCategory("");
                 setPage(1);
               }}
-              className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 cursor-pointer ${
-                category === cat
-                  ? "bg-gradient-to-r from-violet-600 to-violet-700 text-white shadow-md shadow-violet-500/25"
-                  : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground border border-transparent hover:border-violet-200 dark:hover:border-violet-800"
+              className={`shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all cursor-pointer whitespace-nowrap ${
+                category === ""
+                  ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
               }`}
             >
-              {CATEGORY_ICONS[cat]}
-              {cat}
+              <Sparkles className="h-3.5 w-3.5" />
+              All
             </button>
-          ))}
-        </motion.div>
+            {PRODUCT_CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => {
+                  setCategory(cat);
+                  setPage(1);
+                }}
+                className={`shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all cursor-pointer whitespace-nowrap ${
+                  category === cat
+                    ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                }`}
+              >
+                {CATEGORY_ICONS[cat]}
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
 
-        {/* Sort */}
-        <div className="mb-8 flex items-center justify-between">
-          <p className="text-sm text-muted-foreground font-medium">
-            {loading ? (
-              <span className="inline-flex items-center gap-2">
-                <motion.span
-                  className="inline-block w-2 h-2 rounded-full bg-violet-400"
-                  animate={{ opacity: [0.3, 1, 0.3] }}
-                  transition={{ duration: 1.2, repeat: Infinity }}
-                />
-                Searching...
-              </span>
-            ) : (
-              <span>
-                <span className="text-foreground font-semibold">{total}</span>{" "}
-                products found
-              </span>
-            )}
-          </p>
-          <div className="flex items-center gap-3">
-            <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
+      {/* ============ TRENDING NOW ============ */}
+      {!loading && trendingProducts.length > 0 && !search && (
+        <section className="mx-auto max-w-7xl px-4 pt-10 pb-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-950/30">
+                <Flame className="h-5 w-5 text-orange-500" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                  Trending Now
+                </h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  Most popular picks this week
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                const el = document.getElementById("all-products");
+                el?.scrollIntoView({ behavior: "smooth" });
+              }}
+              className="text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer flex items-center gap-1"
+            >
+              See all
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+
+          <motion.div
+            className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            {trendingProducts.map((product) => (
+              <motion.div key={`trending-${product.id}`} variants={itemVariants}>
+                <ProductCard product={product} />
+              </motion.div>
+            ))}
+          </motion.div>
+        </section>
+      )}
+
+      {/* ============ DEAL OF THE DAY ============ */}
+      {!loading && dealOfTheDay && !search && products.length > 4 && (
+        <section className="mx-auto max-w-7xl px-4 py-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-red-50 dark:bg-red-950/30">
+              <Zap className="h-5 w-5 text-red-500" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                Deal of the Day
+              </h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Don&apos;t miss this top-rated item
+              </p>
+            </div>
+          </div>
+
+          <motion.div
+            className="relative rounded-2xl border border-slate-200 dark:border-slate-800 bg-gradient-to-r from-slate-50 to-white dark:from-slate-900 dark:to-slate-800/50 overflow-hidden"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="grid md:grid-cols-2 gap-6 p-6 md:p-8">
+              {/* Product image side */}
+              <div className="flex items-center justify-center">
+                <div className="w-full max-w-sm">
+                  <ProductCard product={dealOfTheDay} />
+                </div>
+              </div>
+
+              {/* Info side */}
+              <div className="flex flex-col justify-center space-y-4">
+                <Badge className="w-fit bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-0 px-3 py-1">
+                  <Zap className="h-3 w-3 mr-1" />
+                  Featured Deal
+                </Badge>
+
+                <h3 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white leading-tight">
+                  {dealOfTheDay.title}
+                </h3>
+
+                <p className="text-slate-600 dark:text-slate-300 line-clamp-3 leading-relaxed">
+                  {dealOfTheDay.description}
+                </p>
+
+                {/* Rating */}
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-0.5">
+                    {[1, 2, 3, 4, 5].map((star) => {
+                      const avgRating =
+                        dealOfTheDay.reviews.length > 0
+                          ? dealOfTheDay.reviews.reduce(
+                              (sum, r) => sum + r.rating,
+                              0
+                            ) / dealOfTheDay.reviews.length
+                          : 0;
+                      return (
+                        <Star
+                          key={star}
+                          className={`h-4 w-4 ${
+                            star <= Math.round(avgRating)
+                              ? "fill-amber-400 text-amber-400"
+                              : "fill-slate-200 text-slate-200 dark:fill-slate-700 dark:text-slate-700"
+                          }`}
+                        />
+                      );
+                    })}
+                  </div>
+                  <span className="text-sm text-slate-500">
+                    ({dealOfTheDay._count?.reviews || dealOfTheDay.reviews.length}{" "}
+                    reviews)
+                  </span>
+                </div>
+
+                <div className="flex items-baseline gap-3">
+                  <span className="text-3xl font-bold text-slate-900 dark:text-white">
+                    ${dealOfTheDay.price.toFixed(2)}
+                  </span>
+                  <span className="text-lg text-slate-400 line-through">
+                    ${(dealOfTheDay.price * 1.25).toFixed(2)}
+                  </span>
+                  <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-0 text-xs">
+                    Save 20%
+                  </Badge>
+                </div>
+
+                {/* Trust signals for the deal */}
+                <div className="flex flex-wrap gap-3 pt-2">
+                  <span className="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                    <Truck className="h-3.5 w-3.5 text-emerald-500" />
+                    Free shipping
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                    <Shield className="h-3.5 w-3.5 text-blue-500" />
+                    Buyer protection
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                    <Clock className="h-3.5 w-3.5 text-orange-500" />
+                    Limited time
+                  </span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </section>
+      )}
+
+      {/* ============ ALL PRODUCTS GRID ============ */}
+      <section id="all-products" className="mx-auto max-w-7xl px-4 py-8">
+        {/* Section header with sort */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+              {search
+                ? `Results for "${search}"`
+                : category
+                  ? category
+                  : "Browse All Products"}
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+              {loading ? (
+                <span className="inline-flex items-center gap-2">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Searching...
+                </span>
+              ) : (
+                <span>
+                  <span className="font-semibold text-slate-700 dark:text-slate-200">
+                    {total}
+                  </span>{" "}
+                  products found
+                </span>
+              )}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <SlidersHorizontal className="h-4 w-4 text-slate-400" />
             <Select
               value={sortBy}
               onValueChange={(v) => setSortBy(v ?? "createdAt")}
             >
-              <SelectTrigger className="w-44 cursor-pointer rounded-xl border-muted-foreground/20">
+              <SelectTrigger className="w-44 cursor-pointer rounded-lg border-slate-200 dark:border-slate-700 text-sm">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="rounded-xl">
+              <SelectContent className="rounded-lg">
                 <SelectItem value="createdAt" className="cursor-pointer">
-                  Newest
+                  Newest First
                 </SelectItem>
                 <SelectItem value="price" className="cursor-pointer">
                   Price: Low to High
                 </SelectItem>
                 <SelectItem value="title" className="cursor-pointer">
-                  Name
+                  Name: A to Z
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -428,29 +510,29 @@ export default function HomeContent() {
           {loading ? (
             <motion.div
               key="skeleton"
-              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+              className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.2 }}
             >
               {Array.from({ length: 8 }).map((_, i) => (
                 <div
                   key={i}
-                  className="rounded-2xl border border-muted/50 overflow-hidden bg-card"
+                  className="rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900"
                 >
                   <Skeleton className="aspect-square w-full" />
                   <div className="p-4 space-y-3">
-                    <Skeleton className="h-4 w-3/4 rounded-lg" />
-                    <Skeleton className="h-3 w-1/2 rounded-lg" />
+                    <Skeleton className="h-4 w-3/4 rounded" />
+                    <Skeleton className="h-3 w-1/2 rounded" />
                     <div className="flex gap-1">
                       {Array.from({ length: 5 }).map((_, j) => (
                         <Skeleton key={j} className="h-3 w-3 rounded-full" />
                       ))}
                     </div>
                     <div className="flex items-center justify-between pt-2">
-                      <Skeleton className="h-6 w-16 rounded-lg" />
-                      <Skeleton className="h-8 w-20 rounded-lg" />
+                      <Skeleton className="h-6 w-16 rounded" />
+                      <Skeleton className="h-8 w-20 rounded" />
                     </div>
                   </div>
                 </div>
@@ -463,38 +545,41 @@ export default function HomeContent() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: 0.4 }}
             >
-              <div className="w-20 h-20 rounded-2xl bg-muted/50 flex items-center justify-center mb-6">
-                <PackageSearch className="h-10 w-10 text-muted-foreground/40" />
+              <div className="w-20 h-20 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-6">
+                <PackageSearch className="h-10 w-10 text-slate-300 dark:text-slate-600" />
               </div>
-              <h3 className="text-xl font-heading font-semibold mb-2">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
                 No products found
               </h3>
-              <p className="text-muted-foreground max-w-sm">
+              <p className="text-slate-500 dark:text-slate-400 max-w-sm">
                 Try adjusting your search or filters to discover more products
               </p>
               <Button
                 variant="outline"
-                className="mt-6 rounded-xl cursor-pointer"
+                className="mt-6 rounded-lg cursor-pointer"
                 onClick={() => {
                   setSearch("");
                   setCategory("");
                   setPage(1);
                 }}
               >
-                Clear filters
+                Clear all filters
               </Button>
             </motion.div>
           ) : (
             <motion.div
               key="products"
-              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+              className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
               variants={containerVariants}
               initial="hidden"
               animate="visible"
             >
-              {products.map((product) => (
+              {(search || products.length <= 4
+                ? products
+                : gridProducts
+              ).map((product) => (
                 <motion.div key={product.id} variants={itemVariants}>
                   <ProductCard product={product} />
                 </motion.div>
@@ -505,23 +590,18 @@ export default function HomeContent() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <motion.div
-            className="mt-12 flex items-center justify-center gap-3"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5, duration: 0.5 }}
-          >
+          <div className="mt-12 flex items-center justify-center gap-2">
             <Button
               variant="outline"
               size="icon"
               disabled={page <= 1}
               onClick={() => setPage(page - 1)}
-              className="cursor-pointer h-10 w-10 rounded-xl hover:bg-violet-50 hover:border-violet-300 dark:hover:bg-violet-900/30 dark:hover:border-violet-700 transition-all duration-300"
+              className="cursor-pointer h-10 w-10 rounded-lg border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1">
               {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                 let pageNum: number;
                 if (totalPages <= 5) {
@@ -537,10 +617,10 @@ export default function HomeContent() {
                   <button
                     key={pageNum}
                     onClick={() => setPage(pageNum)}
-                    className={`h-10 w-10 rounded-xl text-sm font-medium transition-all duration-300 cursor-pointer ${
+                    className={`h-10 w-10 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
                       page === pageNum
-                        ? "bg-gradient-to-r from-violet-600 to-violet-700 text-white shadow-md shadow-violet-500/25"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900"
+                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                     }`}
                   >
                     {pageNum}
@@ -554,12 +634,41 @@ export default function HomeContent() {
               size="icon"
               disabled={page >= totalPages}
               onClick={() => setPage(page + 1)}
-              className="cursor-pointer h-10 w-10 rounded-xl hover:bg-violet-50 hover:border-violet-300 dark:hover:bg-violet-900/30 dark:hover:border-violet-700 transition-all duration-300"
+              className="cursor-pointer h-10 w-10 rounded-lg border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
-          </motion.div>
+          </div>
         )}
+      </section>
+
+      {/* ============ BOTTOM CTA / NEWSLETTER ============ */}
+      <section className="bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800">
+        <div className="mx-auto max-w-7xl px-4 py-12">
+          <div className="text-center space-y-4">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+              Start Selling Today
+            </h2>
+            <p className="text-slate-500 dark:text-slate-400 max-w-lg mx-auto">
+              Join thousands of sellers and reach millions of customers.
+              Easy setup, secure payments, and powerful tools to grow your business.
+            </p>
+            <div className="flex items-center justify-center gap-6 pt-2 text-sm text-slate-500 dark:text-slate-400">
+              <span className="flex items-center gap-1.5">
+                <Shield className="h-4 w-4 text-emerald-500" />
+                Secure payments
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Truck className="h-4 w-4 text-blue-500" />
+                Seller tools
+              </span>
+              <span className="flex items-center gap-1.5">
+                <TrendingUp className="h-4 w-4 text-orange-500" />
+                Analytics
+              </span>
+            </div>
+          </div>
+        </div>
       </section>
     </div>
   );

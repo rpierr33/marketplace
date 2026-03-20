@@ -42,6 +42,10 @@ model User {
   seller  Seller?
   orders  Order[]
   reviews Review[]
+  wishlistItems     WishlistItem[]
+  viewedItems       ViewedItem[]
+  savedAddresses    SavedAddress[]
+  savedPaymentMethods SavedPaymentMethod[]
 
   @@map("users")
 }
@@ -81,6 +85,8 @@ model Product {
   seller     Seller      @relation(fields: [sellerId], references: [id], onDelete: Cascade)
   orderItems OrderItem[]
   reviews    Review[]
+  wishlistItems WishlistItem[]
+  viewedItems   ViewedItem[]
 
   @@index([sellerId])
   @@index([category])
@@ -153,4 +159,62 @@ model Review {
   @@unique([userId, productId])
   @@index([productId])
   @@map("reviews")
+}
+
+model WishlistItem {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  productId String   @map("product_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@map("wishlist_items")
+}
+
+model ViewedItem {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  productId String   @map("product_id")
+  viewedAt  DateTime @default(now()) @map("viewed_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@map("viewed_items")
+}
+
+model SavedAddress {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  label     String
+  fullName  String   @map("full_name")
+  street    String
+  city      String
+  state     String
+  zipCode   String   @map("zip_code")
+  country   String   @default("US")
+  isDefault Boolean  @default(false) @map("is_default")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("saved_addresses")
+}
+
+model SavedPaymentMethod {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  type      String   // "credit_card", "paypal", "cashapp", "zelle"
+  label     String   // "Visa ending 4242", "PayPal - john@email.com", etc.
+  details   String?  // masked card number, email, etc.
+  isDefault Boolean  @default(false) @map("is_default")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("saved_payment_methods")
 }

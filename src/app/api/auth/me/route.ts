@@ -1,20 +1,17 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getSession } from "@/lib/auth-jwt";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user: authUser },
-    } = await supabase.auth.getUser();
+    const session = await getSession();
 
-    if (!authUser) {
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: authUser.id },
+      where: { id: session.id },
       include: { seller: true },
     });
 

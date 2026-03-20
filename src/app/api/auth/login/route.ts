@@ -4,42 +4,37 @@ import { createToken, setSession } from "@/lib/auth-jwt";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 
-const signupSchema = z.object({
+const loginSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(6),
-  name: z.string().min(1),
-  role: z.enum(["BUYER", "SELLER"]).default("BUYER"),
+  password: z.string().min(1),
 });
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password, name, role } = signupSchema.parse(body);
+    const { email, password } = loginSchema.parse(body);
 
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
+    // Find user by email
+    const user = await prisma.user.findUnique({
       where: { email },
+      include: { seller: true },
     });
 
-    if (existingUser) {
+    if (!user || !user.passwordHash) {
       return NextResponse.json(
-        { error: "An account with this email already exists" },
-        { status: 400 }
+        { error: "Invalid email or password" },
+        { status: 401 }
       );
     }
 
-    // Hash password
-    const passwordHash = await bcrypt.hash(password, 12);
-
-    // Create user in database
-    const user = await prisma.user.create({
-      data: {
-        email,
-        name,
-        role,
-        passwordHash,
-      },
-    });
+    // Verify password
+    const isValid = await bcrypt.compare(password, user.passwordHash);
+    if (!isValid) {
+      return NextResponse.json(
+        { error: "Invalid email or password" },
+        { status: 401 }
+      );
+    }
 
     // Create JWT and set session
     const token = await createToken({
@@ -49,17 +44,14 @@ export async function POST(request: NextRequest) {
     });
     await setSession(token);
 
-    return NextResponse.json(
-      {
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        },
+    return NextResponse.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
       },
-      { status: 201 }
-    );
+    });
   } catch (err) {
     if (err instanceof z.ZodError) {
       return NextResponse.json(

@@ -15,7 +15,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
 export default function LoginForm() {
@@ -31,14 +30,16 @@ export default function LoginForm() {
     setLoading(true);
 
     try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
 
-      if (error) {
-        toast.error(error.message);
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error || "Invalid credentials");
         return;
       }
 

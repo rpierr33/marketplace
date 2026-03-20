@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
@@ -38,26 +37,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = await createClient();
-    const ext = file.name.split(".").pop();
-    const fileName = `${user.id}/${Date.now()}.${ext}`;
+    // Placeholder: return a placeholder image URL
+    // TODO: Replace with real file storage (e.g., S3, Cloudinary, local disk)
+    const placeholderUrl = `https://placehold.co/600x400?text=${encodeURIComponent(file.name)}`;
 
-    const { error } = await supabase.storage
-      .from("product-images")
-      .upload(fileName, file);
-
-    if (error) {
-      return NextResponse.json(
-        { error: "Upload failed: " + error.message },
-        { status: 500 }
-      );
-    }
-
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from("product-images").getPublicUrl(fileName);
-
-    return NextResponse.json({ url: publicUrl });
+    return NextResponse.json({ url: placeholderUrl });
   } catch {
     return NextResponse.json(
       { error: "Upload failed" },

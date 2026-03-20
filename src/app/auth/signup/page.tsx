@@ -50,10 +50,9 @@ export default function SignupPage() {
         return;
       }
 
-      toast.success(
-        "Account created! Check your email to confirm, then sign in."
-      );
-      router.push("/auth/login");
+      toast.success("Account created! Welcome to Marketplace.");
+      router.push(data.user?.role === "SELLER" ? "/seller/onboarding" : "/");
+      router.refresh();
     } catch {
       toast.error("Something went wrong");
     } finally {

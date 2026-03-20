@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { pusher } from "@/lib/pusher";
 import { z } from "zod";
 
 const buyNowSchema = z.object({
@@ -29,6 +30,7 @@ export async function POST(
         seller: true,
         items: {
           where: { id: data.liveSaleItemId },
+          include: { product: true },
         },
       },
     });
@@ -74,25 +76,60 @@ export async function POST(
       );
     }
 
-    // Mark item as sold with winner
-    const updatedItem = await prisma.liveSaleItem.update({
-      where: { id: data.liveSaleItemId },
-      data: {
-        isSold: true,
-        winnerId: user.id,
-        currentBid: item.buyNowPrice,
-      },
-      include: {
-        product: {
-          select: { id: true, title: true, imageUrl: true, price: true },
+    // Mark item as sold, create order and payment in a transaction
+    const [updatedItem, order] = await prisma.$transaction(async (tx) => {
+      const soldItem = await tx.liveSaleItem.update({
+        where: { id: data.liveSaleItemId },
+        data: {
+          isSold: true,
+          winnerId: user.id,
+          currentBid: item.buyNowPrice!,
         },
-        winner: {
-          select: { id: true, name: true },
+        include: {
+          product: {
+            select: { id: true, title: true, imageUrl: true, price: true },
+          },
+          winner: {
+            select: { id: true, name: true },
+          },
         },
-      },
+      });
+
+      const newOrder = await tx.order.create({
+        data: {
+          userId: user.id,
+          total: item.buyNowPrice!,
+          status: "PENDING",
+          items: {
+            create: {
+              productId: item.productId,
+              quantity: 1,
+              price: item.buyNowPrice!,
+            },
+          },
+        },
+      });
+
+      await tx.payment.create({
+        data: {
+          orderId: newOrder.id,
+          amount: item.buyNowPrice!,
+          platformFee: item.buyNowPrice! * 0.1,
+          status: "PENDING",
+        },
+      });
+
+      return [soldItem, newOrder];
     });
 
-    return NextResponse.json({ item: updatedItem });
+    // Trigger Pusher event for real-time update
+    await pusher.trigger(`live-sale-${id}`, "item-sold", {
+      liveSaleItemId: data.liveSaleItemId,
+      buyerName: user.name || "Anonymous",
+      buyNowPrice: item.buyNowPrice,
+    });
+
+    return NextResponse.json({ item: updatedItem, orderId: order.id });
   } catch (err) {
     if (err instanceof z.ZodError) {
       return NextResponse.json(

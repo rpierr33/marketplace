@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
@@ -13,11 +13,12 @@ import {
   Sparkles,
   Gavel,
   ArrowRight,
-  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
+import { getPusherClient } from "@/lib/pusher-client";
 
 interface LiveSale {
   id: string;
@@ -207,25 +208,49 @@ export default function LiveSalesPage() {
   const [scheduledSales, setScheduledSales] = useState<LiveSale[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const [liveRes, scheduledRes] = await Promise.all([
-          fetch("/api/live-sales?status=LIVE&limit=50"),
-          fetch("/api/live-sales?status=SCHEDULED&limit=50"),
-        ]);
-        const liveData = await liveRes.json();
-        const scheduledData = await scheduledRes.json();
-        setLiveSales(liveData.liveSales || []);
-        setScheduledSales(scheduledData.liveSales || []);
-      } catch {
-        // Silently fail
-      } finally {
-        setLoading(false);
-      }
+  const fetchData = useCallback(async () => {
+    try {
+      const [liveRes, scheduledRes] = await Promise.all([
+        fetch("/api/live-sales?status=LIVE&limit=50"),
+        fetch("/api/live-sales?status=SCHEDULED&limit=50"),
+      ]);
+      const liveData = await liveRes.json();
+      const scheduledData = await scheduledRes.json();
+      setLiveSales(liveData.liveSales || []);
+      setScheduledSales(scheduledData.liveSales || []);
+    } catch {
+      // Silently fail
+    } finally {
+      setLoading(false);
     }
-    fetchData();
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Subscribe to global live-sales channel for real-time updates
+  useEffect(() => {
+    const pusher = getPusherClient();
+    const channel = pusher.subscribe("live-sales");
+
+    channel.bind("sale-started", (data: { saleId: string; title: string }) => {
+      toast.info(`"${data.title}" is now LIVE!`);
+      // Re-fetch to move the sale from scheduled to live
+      fetchData();
+    });
+
+    channel.bind("sale-ended", (data: { saleId: string; title: string }) => {
+      toast.info(`"${data.title}" has ended.`);
+      // Remove from live sales list
+      setLiveSales((prev) => prev.filter((s) => s.id !== data.saleId));
+    });
+
+    return () => {
+      channel.unbind_all();
+      pusher.unsubscribe("live-sales");
+    };
+  }, [fetchData]);
 
   if (loading) {
     return (

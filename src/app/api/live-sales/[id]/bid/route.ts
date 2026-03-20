@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { pusher } from "@/lib/pusher";
 import { z } from "zod";
 
 const placeBidSchema = z.object({
@@ -96,6 +97,20 @@ export async function POST(
         where: { id: data.liveSaleItemId },
         data: { currentBid: data.amount },
       }),
+    ]);
+
+    // Trigger Pusher events for real-time updates
+    const bidEventData = {
+      liveSaleItemId: data.liveSaleItemId,
+      amount: data.amount,
+      bidderName: user.name || "Anonymous",
+      bidderId: user.id,
+      timestamp: new Date().toISOString(),
+    };
+
+    await Promise.all([
+      pusher.trigger(`live-sale-${id}`, "new-bid", bidEventData),
+      pusher.trigger(`live-sale-${id}`, "outbid", bidEventData),
     ]);
 
     return NextResponse.json({ bid }, { status: 201 });

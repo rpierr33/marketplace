@@ -16,6 +16,7 @@ import {
   ThumbsUp,
   Smile,
   Shield,
+  Gem,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -140,9 +141,19 @@ export function ProductCard({ product }: ProductCardProps) {
             />
           </motion.button>
 
+          {/* Luxury badge */}
+          {product.isLuxury && (
+            <div className="absolute top-3 left-3 z-10">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-500/90 text-white backdrop-blur-sm shadow-sm">
+                <Gem className="h-3 w-3" />
+                Luxury
+              </span>
+            </div>
+          )}
+
           {/* Stock badges */}
           {stockStatus === "low" && (
-            <div className="absolute top-3 left-3 z-10">
+            <div className={`absolute ${product.isLuxury ? "top-10" : "top-3"} left-3 z-10`}>
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-orange-500/90 text-white backdrop-blur-sm shadow-sm">
                 <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                 Only {product.stock} left

@@ -11,6 +11,7 @@ const createProductSchema = z.object({
   stock: z.number().int().min(0).default(0),
   imageUrl: z.string().url().optional(),
   condition: z.enum(["NEW", "SEEMS_NEW", "PRETTY_GOOD", "USED_BATTLE_SCARS"]).default("NEW"),
+  isLuxury: z.boolean().default(false),
 });
 
 // GET /api/products - List products with search/filter

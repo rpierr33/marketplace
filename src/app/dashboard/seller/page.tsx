@@ -23,6 +23,8 @@ import {
   Play,
   Square,
   X as XIcon,
+  Gem,
+  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -72,6 +74,14 @@ interface Product {
   condition: string;
   imageUrl: string | null;
   isActive: boolean;
+  isLuxury: boolean;
+}
+
+interface ValidationImage {
+  id: string;
+  imageUrl: string;
+  caption: string | null;
+  createdAt: string;
 }
 
 interface LiveSaleData {
@@ -113,6 +123,14 @@ export default function SellerDashboard() {
   const [saving, setSaving] = useState(false);
   const [savingLive, setSavingLive] = useState(false);
 
+  // Validation dialog state
+  const [validateDialogOpen, setValidateDialogOpen] = useState(false);
+  const [validateProductId, setValidateProductId] = useState<string | null>(null);
+  const [validations, setValidations] = useState<ValidationImage[]>([]);
+  const [validationLoading, setValidationLoading] = useState(false);
+  const [validationForm, setValidationForm] = useState({ imageUrl: "", caption: "" });
+  const [addingValidation, setAddingValidation] = useState(false);
+
   // Product form
   const [form, setForm] = useState({
     title: "",
@@ -122,6 +140,7 @@ export default function SellerDashboard() {
     stock: "",
     imageUrl: "",
     condition: "NEW",
+    isLuxury: false,
   });
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -181,6 +200,7 @@ export default function SellerDashboard() {
         category: form.category,
         stock: parseInt(form.stock),
         condition: form.condition,
+        isLuxury: form.isLuxury,
         ...(form.imageUrl && { imageUrl: form.imageUrl }),
       };
 
@@ -338,6 +358,7 @@ export default function SellerDashboard() {
       stock: "",
       imageUrl: "",
       condition: "NEW",
+      isLuxury: false,
     });
     setEditingId(null);
   };
@@ -364,6 +385,7 @@ export default function SellerDashboard() {
       stock: product.stock.toString(),
       imageUrl: product.imageUrl || "",
       condition: product.condition || "NEW",
+      isLuxury: product.isLuxury || false,
     });
     setEditingId(product.id);
     setDialogOpen(true);
@@ -424,6 +446,72 @@ export default function SellerDashboard() {
         p.productId === productId ? { ...p, [field]: value } : p
       ),
     }));
+  };
+
+  // Validation functions
+  const openValidateDialog = async (productId: string) => {
+    setValidateProductId(productId);
+    setValidateDialogOpen(true);
+    setValidationLoading(true);
+    try {
+      const res = await fetch(`/api/products/${productId}/validations`);
+      const data = await res.json();
+      setValidations(data.validations || []);
+    } catch {
+      toast.error("Failed to load validations");
+    } finally {
+      setValidationLoading(false);
+    }
+  };
+
+  const handleAddValidation = async () => {
+    if (!validateProductId || !validationForm.imageUrl) {
+      toast.error("Image URL is required");
+      return;
+    }
+    setAddingValidation(true);
+    try {
+      const res = await fetch(`/api/products/${validateProductId}/validations`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          imageUrl: validationForm.imageUrl,
+          caption: validationForm.caption || undefined,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data.error || "Failed to add validation");
+        return;
+      }
+      const data = await res.json();
+      setValidations((prev) => [data.validation, ...prev]);
+      setValidationForm({ imageUrl: "", caption: "" });
+      toast.success("Validation photo added");
+    } catch {
+      toast.error("Failed to add validation");
+    } finally {
+      setAddingValidation(false);
+    }
+  };
+
+  const handleDeleteValidation = async (validationId: string) => {
+    if (!validateProductId) return;
+    try {
+      const res = await fetch(
+        `/api/products/${validateProductId}/validations?validationId=${validationId}`,
+        { method: "DELETE" }
+      );
+      if (res.ok) {
+        setValidations((prev) => prev.filter((v) => v.id !== validationId));
+        toast.success("Validation photo removed");
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to delete");
+      }
+    } catch {
+      toast.error("Failed to delete");
+    }
   };
 
   if (loading) {
@@ -647,6 +735,30 @@ export default function SellerDashboard() {
                       </p>
                     )}
                   </div>
+
+                  {/* Luxury toggle */}
+                  <div className="flex items-center gap-3 rounded-lg border p-3">
+                    <input
+                      type="checkbox"
+                      id="isLuxury"
+                      checked={form.isLuxury}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, isLuxury: e.target.checked }))
+                      }
+                      className="h-4 w-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
+                    />
+                    <div className="flex-1">
+                      <Label htmlFor="isLuxury" className="cursor-pointer flex items-center gap-1.5 text-sm font-medium">
+                        <Gem className="h-4 w-4 text-amber-500" />
+                        This is a luxury/high-value item
+                      </Label>
+                      {form.isLuxury && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          You can add validation photos after creating the product
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
                 <DialogFooter>
                   <Button
@@ -701,9 +813,14 @@ export default function SellerDashboard() {
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate">
-                            {product.title}
-                          </p>
+                          <div className="flex items-center gap-1.5">
+                            <p className="font-medium text-sm truncate">
+                              {product.title}
+                            </p>
+                            {product.isLuxury && (
+                              <Gem className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                            )}
+                          </div>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <span>${product.price.toFixed(2)}</span>
                             <span>·</span>
@@ -723,6 +840,17 @@ export default function SellerDashboard() {
                           {product.isActive ? "Active" : "Hidden"}
                         </Badge>
                         <div className="flex items-center gap-1">
+                          {product.isLuxury && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 px-2 cursor-pointer text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 text-xs font-semibold"
+                              onClick={() => openValidateDialog(product.id)}
+                            >
+                              <ShieldCheck className="h-3.5 w-3.5 mr-1" />
+                              Validate
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"
@@ -1118,6 +1246,107 @@ export default function SellerDashboard() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Validation Dialog */}
+      <Dialog
+        open={validateDialogOpen}
+        onOpenChange={(open) => {
+          setValidateDialogOpen(open);
+          if (!open) {
+            setValidateProductId(null);
+            setValidations([]);
+            setValidationForm({ imageUrl: "", caption: "" });
+          }
+        }}
+      >
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-amber-500" />
+              Luxury Item Validation
+            </DialogTitle>
+            <DialogDescription>
+              Add photos proving the authenticity of this item (receipts, certificates, close-up details)
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Add new validation */}
+            <div className="space-y-3 rounded-lg border p-3">
+              <div className="space-y-2">
+                <Label>Image URL</Label>
+                <Input
+                  value={validationForm.imageUrl}
+                  onChange={(e) =>
+                    setValidationForm((f) => ({ ...f, imageUrl: e.target.value }))
+                  }
+                  placeholder="https://example.com/receipt.jpg"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Caption (optional)</Label>
+                <Input
+                  value={validationForm.caption}
+                  onChange={(e) =>
+                    setValidationForm((f) => ({ ...f, caption: e.target.value }))
+                  }
+                  placeholder="e.g. Original receipt from retailer"
+                />
+              </div>
+              <Button
+                size="sm"
+                onClick={handleAddValidation}
+                disabled={addingValidation || !validationForm.imageUrl}
+                className="cursor-pointer bg-amber-600 hover:bg-amber-700 text-white"
+              >
+                {addingValidation && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+                <Plus className="mr-1 h-3.5 w-3.5" />
+                Add Validation Photo
+              </Button>
+            </div>
+
+            {/* Existing validations */}
+            {validationLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : validations.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+                <ShieldCheck className="h-10 w-10 mb-2 opacity-30" />
+                <p className="text-sm">No validation photos yet</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                {validations.map((v) => (
+                  <div key={v.id} className="relative group rounded-lg overflow-hidden border">
+                    <div className="relative aspect-square">
+                      <Image
+                        src={v.imageUrl}
+                        alt={v.caption || "Validation photo"}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    {v.caption && (
+                      <p className="text-xs text-muted-foreground p-2 truncate">
+                        {v.caption}
+                      </p>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute top-1 right-1 h-7 w-7 bg-black/50 hover:bg-red-600 text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      onClick={() => handleDeleteValidation(v.id)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -23,7 +23,8 @@ import { toast } from "sonner";
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { items, totalPrice } = useCart();
+  const { items } = useCart();
+  const cartTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const [loading, setLoading] = useState(false);
 
   if (items.length === 0) {
@@ -106,7 +107,7 @@ export default function CheckoutPage() {
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Subtotal</span>
-              <span>${totalPrice().toFixed(2)}</span>
+              <span>${cartTotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Shipping</span>
@@ -116,7 +117,7 @@ export default function CheckoutPage() {
             <div className="flex justify-between font-bold text-lg">
               <span>Total</span>
               <span className="text-violet-600">
-                ${totalPrice().toFixed(2)}
+                ${cartTotal.toFixed(2)}
               </span>
             </div>
           </div>
@@ -132,7 +133,7 @@ export default function CheckoutPage() {
             ) : (
               <Lock className="mr-2 h-5 w-5" />
             )}
-            Pay ${totalPrice().toFixed(2)}
+            Pay ${cartTotal.toFixed(2)}
           </Button>
           <p className="text-xs text-center text-muted-foreground flex items-center gap-1">
             <Lock className="h-3 w-3" />

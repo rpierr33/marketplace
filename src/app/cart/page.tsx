@@ -17,8 +17,9 @@ import { useCart } from "@/hooks/use-cart";
 
 export default function CartPage() {
   const router = useRouter();
-  const { items, removeItem, updateQuantity, totalPrice, clearCart } =
+  const { items, removeItem, updateQuantity, clearCart } =
     useCart();
+  const cartTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   if (items.length === 0) {
     return (
@@ -165,7 +166,7 @@ export default function CartPage() {
                 <span className="text-muted-foreground">
                   Subtotal ({items.reduce((s, i) => s + i.quantity, 0)} items)
                 </span>
-                <span>${totalPrice().toFixed(2)}</span>
+                <span>${cartTotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Shipping</span>
@@ -175,7 +176,7 @@ export default function CartPage() {
               <div className="flex justify-between font-bold text-lg">
                 <span>Total</span>
                 <span className="text-violet-600">
-                  ${totalPrice().toFixed(2)}
+                  ${cartTotal.toFixed(2)}
                 </span>
               </div>
             </CardContent>

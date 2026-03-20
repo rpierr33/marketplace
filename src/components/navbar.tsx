@@ -39,7 +39,8 @@ export function Navbar() {
   const [searchFocused, setSearchFocused] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [liveCount, setLiveCount] = useState(0);
-  const totalItems = useCart((s) => s.totalItems);
+  const items = useCart((s) => s.items);
+  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   useEffect(() => {
     setMounted(true);
@@ -77,8 +78,6 @@ export function Navbar() {
       setMobileMenuOpen(false);
     }
   };
-
-  const itemCount = totalItems();
 
   const userInitial = user?.name
     ? user.name.charAt(0).toUpperCase()

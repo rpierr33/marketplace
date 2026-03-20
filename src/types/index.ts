@@ -29,6 +29,7 @@ export interface ProductWithSeller {
   stock: number;
   condition: string;
   isActive: boolean;
+  isLuxury: boolean;
   createdAt: Date;
   seller: {
     id: string;

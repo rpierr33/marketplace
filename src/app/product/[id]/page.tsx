@@ -15,6 +15,9 @@ import {
   ThumbsUp,
   Smile,
   Shield,
+  Gem,
+  ShieldCheck,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +34,13 @@ const CONDITION_ICONS: Record<string, React.ReactNode> = {
   shield: <Shield className="h-4 w-4" />,
 };
 
+interface ValidationImage {
+  id: string;
+  imageUrl: string;
+  caption: string | null;
+  createdAt: string;
+}
+
 interface ProductDetail {
   id: string;
   title: string;
@@ -41,6 +51,7 @@ interface ProductDetail {
   stock: number;
   condition: string;
   isActive: boolean;
+  isLuxury: boolean;
   createdAt: string;
   seller: {
     id: string;
@@ -54,6 +65,7 @@ interface ProductDetail {
     createdAt: string;
     user: { id: string; name: string | null; avatarUrl: string | null };
   }[];
+  validations: ValidationImage[];
   _count: { reviews: number };
 }
 
@@ -62,6 +74,7 @@ export default function ProductPage() {
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const addItem = useCart((s) => s.addItem);
 
   useEffect(() => {
@@ -152,6 +165,12 @@ export default function ProductPage() {
                 {CONDITION_ICONS[conditionInfo.icon]}
                 {conditionInfo.label}
               </span>
+              {product.isLuxury && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                  <Gem className="h-3.5 w-3.5" />
+                  Luxury Item
+                </span>
+              )}
             </div>
             <h1 className="text-3xl font-heading font-bold">{product.title}</h1>
 
@@ -246,6 +265,81 @@ export default function ProductPage() {
           </div>
         </div>
       </div>
+
+      {/* Seller Verification Section for Luxury Items */}
+      {product.isLuxury && (
+        <div className="mt-12">
+          <div className="flex items-center gap-2 mb-6">
+            <ShieldCheck className="h-6 w-6 text-amber-500" />
+            <h2 className="text-2xl font-heading font-bold">
+              Seller Verification
+            </h2>
+          </div>
+
+          {product.validations && product.validations.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {product.validations.map((v) => (
+                <div
+                  key={v.id}
+                  className="relative group rounded-xl overflow-hidden border cursor-pointer hover:shadow-lg transition-shadow"
+                  onClick={() => setLightboxImage(v.imageUrl)}
+                >
+                  <div className="relative aspect-square">
+                    <Image
+                      src={v.imageUrl}
+                      alt={v.caption || "Validation photo"}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  {v.caption && (
+                    <div className="p-2">
+                      <p className="text-xs text-muted-foreground truncate">
+                        {v.caption}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-8 rounded-xl border border-dashed text-muted-foreground">
+              <ShieldCheck className="h-10 w-10 mb-2 opacity-30" />
+              <p className="text-sm font-medium">Validation pending</p>
+              <p className="text-xs mt-1">
+                The seller has not yet uploaded verification evidence for this item
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Lightbox */}
+      {lightboxImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={() => setLightboxImage(null)}
+        >
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-4 right-4 text-white hover:bg-white/20 cursor-pointer z-10"
+            onClick={() => setLightboxImage(null)}
+          >
+            <X className="h-6 w-6" />
+          </Button>
+          <div className="relative max-w-3xl max-h-[85vh] w-full mx-4">
+            <Image
+              src={lightboxImage}
+              alt="Validation photo enlarged"
+              width={1200}
+              height={1200}
+              className="object-contain w-full h-auto max-h-[85vh] rounded-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Reviews */}
       {product.reviews.length > 0 && (

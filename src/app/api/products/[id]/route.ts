@@ -12,6 +12,7 @@ const updateProductSchema = z.object({
   imageUrl: z.string().url().optional().nullable(),
   isActive: z.boolean().optional(),
   condition: z.enum(["NEW", "SEEMS_NEW", "PRETTY_GOOD", "USED_BATTLE_SCARS"]).optional(),
+  isLuxury: z.boolean().optional(),
 });
 
 // GET /api/products/[id]
@@ -32,6 +33,9 @@ export async function GET(
           include: {
             user: { select: { id: true, name: true, avatarUrl: true } },
           },
+          orderBy: { createdAt: "desc" },
+        },
+        validations: {
           orderBy: { createdAt: "desc" },
         },
         _count: { select: { reviews: true } },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -29,6 +29,11 @@ export function ProductCard({ product }: ProductCardProps) {
   const [cartState, setCartState] = useState<"idle" | "loading" | "success">(
     "idle"
   );
+  const [imgError, setImgError] = useState(false);
+
+  const handleImageError = useCallback(() => {
+    setImgError(true);
+  }, []);
 
   const avgRating =
     product.reviews.length > 0
@@ -86,13 +91,14 @@ export function ProductCard({ product }: ProductCardProps) {
 
         {/* Image container */}
         <div className="relative aspect-square overflow-hidden bg-muted/30">
-          {product.imageUrl ? (
+          {product.imageUrl && !imgError ? (
             <Image
               src={product.imageUrl}
               alt={product.title}
               fill
               className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+              onError={handleImageError}
             />
           ) : (
             <div className="flex h-full items-center justify-center bg-gradient-to-br from-muted/50 to-muted text-muted-foreground/30">

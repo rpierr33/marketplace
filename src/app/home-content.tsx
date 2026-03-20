@@ -488,7 +488,16 @@ export default function HomeContent() {
               onValueChange={(v) => setSortBy(v ?? "createdAt")}
             >
               <SelectTrigger className="w-44 cursor-pointer rounded-lg border-slate-200 dark:border-slate-700 text-sm">
-                <SelectValue />
+                <SelectValue placeholder="Sort by">
+                  {(value: string) => {
+                    const labels: Record<string, string> = {
+                      createdAt: "Newest First",
+                      price: "Price: Low to High",
+                      title: "Name: A to Z",
+                    };
+                    return labels[value] || value;
+                  }}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent className="rounded-lg">
                 <SelectItem value="createdAt" className="cursor-pointer">

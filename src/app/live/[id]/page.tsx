@@ -203,16 +203,29 @@ export default function LiveSaleDetailPage() {
     fetchSale();
   }, [fetchSale]);
 
-  // Timer update
+  // Timer update + auto-end when countdown reaches zero
   useEffect(() => {
     if (!liveSale) return;
     const update = () => {
       setTimer(formatTimer(liveSale.startTime, liveSale.endTime, liveSale.status));
+      // Auto-end: if sale is LIVE and endTime has passed, trigger end
+      if (
+        liveSale.status === "LIVE" &&
+        liveSale.endTime &&
+        new Date(liveSale.endTime) <= new Date() &&
+        !saleEnded
+      ) {
+        fetch(`/api/live-sales/${saleId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "ENDED" }),
+        }).catch(() => {});
+      }
     };
     update();
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
-  }, [liveSale]);
+  }, [liveSale, saleEnded, saleId]);
 
   // Watcher count: increment on mount, decrement on unmount
   useEffect(() => {

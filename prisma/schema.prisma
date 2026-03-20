@@ -1,0 +1,155 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  BUYER
+  SELLER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  avatarUrl String?  @map("avatar_url")
+  role      UserRole @default(BUYER)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  seller  Seller?
+  orders  Order[]
+  reviews Review[]
+
+  @@map("users")
+}
+
+model Seller {
+  id               String  @id @default(uuid())
+  userId           String  @unique @map("user_id")
+  storeName        String  @map("store_name")
+  storeDescription String? @map("store_description")
+  stripeAccountId  String? @map("stripe_account_id")
+  isVerified       Boolean @default(false) @map("is_verified")
+  isOnboarded      Boolean @default(false) @map("is_onboarded")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products Product[]
+
+  @@map("sellers")
+}
+
+model Product {
+  id          String  @id @default(uuid())
+  sellerId    String  @map("seller_id")
+  title       String
+  description String
+  price       Float
+  imageUrl    String? @map("image_url")
+  category    String
+  stock       Int     @default(0)
+  isActive    Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  seller     Seller      @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+  reviews    Review[]
+
+  @@index([sellerId])
+  @@index([category])
+  @@index([price])
+  @@index([isActive])
+  @@map("products")
+}
+
+model Order {
+  id     String      @id @default(uuid())
+  userId String      @map("user_id")
+  status OrderStatus @default(PENDING)
+  total  Float
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items   OrderItem[]
+  payment Payment?
+
+  @@index([userId])
+  @@index([status])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String @id @default(uuid())
+  orderId   String @map("order_id")
+  productId String @map("product_id")
+  quantity  Int
+  price     Float
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+model Payment {
+  id              String        @id @default(uuid())
+  orderId         String        @unique @map("order_id")
+  stripeSessionId String?       @unique @map("stripe_session_id")
+  stripePaymentId String?       @unique @map("stripe_payment_id")
+  amount          Float
+  platformFee     Float         @map("platform_fee")
+  status          PaymentStatus @default(PENDING)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+model Review {
+  id        String @id @default(uuid())
+  userId    String @map("user_id")
+  productId String @map("product_id")
+  rating    Int
+  comment   String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([productId])
+  @@map("reviews")
+}
